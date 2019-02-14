@@ -1,0 +1,124 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: froscon-web
+  labels:
+    app.kubernetes.io/name: froscon-web
+    app.kubernetes.io/instance: froscon-web-v1
+    app.kubernetes.io/version: "v1"
+    app.kubernetes.io/component: frontend
+    app.kubernetes.io/part-of: froscon
+    app.kubernetes.io/managed-by: maxd
+spec:
+  ports:
+    -
+      name: "http"
+      port: 6092
+      targetPort: 80
+      protocol: "TCP"
+  selector:
+    app.kubernetes.io/name: froscon-web
+    app.kubernetes.io/instance: froscon-web-v1
+    app.kubernetes.io/version: "v1"
+----
+apiVersion: v1
+kind: Deployment
+metadata:
+  name: froscon-web
+  labels:
+    app.kubernetes.io/name: froscon-web
+    app.kubernetes.io/instance: froscon-web-v1
+    app.kubernetes.io/version: "v1"
+    app.kubernetes.io/component: frontend
+    app.kubernetes.io/part-of: froscon
+    app.kubernetes.io/managed-by: max
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: froscon-web
+      app.kubernetes.io/instance: froscon-web-v1
+      app.kubernetes.io/version: "v1"
+  replicas: 2
+  template:
+    metadata:
+      name: froscon-web-v1
+      labels:
+        app.kubernetes.io/name: froscon-web
+        app.kubernetes.io/instance: froscon-web-v1
+        app.kubernetes.io/version: "v1"
+    spec:
+      imagePullSecrets:
+        - name: regcred
+      containers:
+        - env:
+            - name: APP_BASEDIR_LOG
+              value: /app/log
+            - name: APP_BASEDIR_SRC
+              value: /app/src
+            - name: APP_BASEDIR_TMP
+              value: /app/tmp
+            - name: APP_DEBUG
+              value: "1"
+            - name: APP_ENV
+              value: dev
+            - name: APP_GROUP_ID
+              value: "1000"
+            - name: APP_PHP_MODULE_DIRECTORY
+              value: /etc/php7/conf.d
+            - name: APP_USER_ID
+              value: "1000"
+            - name: APP_WEBROOT
+              value: /app/src/web
+            - name: BASE_URL
+              value: prb-development.local.k8s
+            - name: COMPOSER_CACHE_DIR
+              value: /build/cache/composeer
+            - name: CONTAINER_DEBUG
+              value: "0"
+            - name: CONTAINER_IMAGE
+            - name: DB_DATABASE
+              value: prb
+            - name: DB_HOST
+              value: prb-mysql
+            - name: DB_PASSWORD
+              value: prb
+            - name: DB_ROOT_PW
+              value: root
+            - name: DB_URL
+              value: mysql://prb:prb@prb-mysql:3306/prb
+            - name: DB_USER
+              value: prb
+            - name: MAIL_DOMAIN
+              value: mail
+            - name: MAIL_PASSWORD
+              value: mail
+            - name: MAIL_USER
+              value: mail
+            - name: PHPCR_PASSWORD
+              value: admin
+            - name: PHPCR_USER
+              value: admin
+            - name: PHPCR_WORKSPACE
+              value: prb
+            - name: RUNTIME
+              value: development
+            - name: SYMFONY_ENV
+              value: dev
+            - name: SYSTEM_APPUSER_NAME
+              value: appuser
+            - name: VERSION_TAG
+            - name: XDEBUG_ENABLED
+              value: "1"
+          image: registry.gitlab.com/pressebueroberghof/website/app-development:inline-and-social-media
+          name: froscon-web
+          ports:
+            - containerPort: 80
+              name: "http"
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "250m"
+            limits:
+              memory: "128Mi"
+              cpu: "500m"
+----
