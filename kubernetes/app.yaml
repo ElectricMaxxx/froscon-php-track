@@ -70,36 +70,30 @@ spec:
             - name: APP_WEBROOT
               value: /app/src/web
             - name: BASE_URL
-              value: prb-development.local.k8s
+              value: froscon.local.k8s
             - name: COMPOSER_CACHE_DIR
               value: /build/cache/composeer
             - name: CONTAINER_DEBUG
               value: "0"
             - name: CONTAINER_IMAGE
             - name: DB_DATABASE
-              value: prb
+              value: froscon
             - name: DB_HOST
-              value: prb-mysql
+              value: froscon-mysql
             - name: DB_PASSWORD
-              value: prb
+              value: froscon
             - name: DB_ROOT_PW
               value: root
             - name: DB_URL
-              value: mysql://prb:prb@prb-mysql:3306/prb
+              value: mysql://froscon:froscon@froscon-mysql:3306/froscon
             - name: DB_USER
-              value: prb
-            - name: MAIL_DOMAIN
-              value: mail
-            - name: MAIL_PASSWORD
-              value: mail
-            - name: MAIL_USER
-              value: mail
+              value: froscon
             - name: PHPCR_PASSWORD
               value: admin
             - name: PHPCR_USER
               value: admin
             - name: PHPCR_WORKSPACE
-              value: prb
+              value: froscon
             - name: RUNTIME
               value: development
             - name: SYMFONY_ENV
@@ -109,7 +103,7 @@ spec:
             - name: VERSION_TAG
             - name: XDEBUG_ENABLED
               value: "1"
-          image: registry.gitlab.com/pressebueroberghof/website/app-development:inline-and-social-media
+          image: registry.gitlab.com/froscon/php-track-web/froscon-web:1.0.0
           name: froscon-web
           ports:
             - containerPort: 80
@@ -122,3 +116,79 @@ spec:
               memory: "128Mi"
               cpu: "500m"
 ----
+apiVersion: v1
+kind: Service
+metadata:
+  name: froscon-mysql
+  labels:
+    app.kubernetes.io/name: froscon-mysql
+    app.kubernetes.io/instance: froscon-mysql-v1
+    app.kubernetes.io/version: "v1"
+    app.kubernetes.io/component: database
+    app.kubernetes.io/part-of: froscon-app
+    app.kubernetes.io/managed-by: max
+spec:
+  ports:
+    - port: 3306
+  selector:
+    app.kubernetes.io/name: froscon-mysql
+    app.kubernetes.io/instance: froscon-mysql-v1
+    app.kubernetes.io/version: "v1"
+  clusterIP: None
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: froscon-mysql
+  labels:
+    app.kubernetes.io/name: froscon-mysql
+    app.kubernetes.io/instance: froscon-mysql-v1
+    app.kubernetes.io/version: "v1"
+    app.kubernetes.io/component: database
+    app.kubernetes.io/part-of: froscon
+    app.kubernetes.io/managed-by: max
+spec:
+  serviceName: froscon-mysql
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: froscon-mysql
+      app.kubernetes.io/instance: froscon-mysql-v1
+      app.kubernetes.io/version: "v1"
+  replicas: 1
+  template:
+    metadata:
+      name: froscon-mysql-v1
+      labels:
+        app.kubernetes.io/name: froscon-mysql
+        app.kubernetes.io/instance: froscon-mysql-v1
+        app.kubernetes.io/version: "v1"
+    spec:
+      imagePullSecrets:
+        - name: regcred
+      containers:
+        - env:
+            - name: MYSQL_ALLOW_EMPTY_PASSWORD
+              value: "no"
+            - name: MYSQL_DATABASE
+              value: froscon
+            - name: MYSQL_PASSWORD
+              value: froscon
+            - name: MYSQL_ROOT_HOST
+              value: '%'
+            - name: MYSQL_ROOT_PASSWORD
+              value: root
+            - name: MYSQL_USER
+              value: froscon
+          ports:
+            - containerPort: 3306
+              name: mysql
+          image: mysql:5.7
+          name: froscon-mysql
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "250m"
+            limits:
+              memory: "128Mi"
+              cpu: "500m"
+---
